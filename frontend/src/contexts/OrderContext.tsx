@@ -19,7 +19,7 @@ interface OrderContextType {
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
-const API_URL = "http://localhost:4000";
+const API_URL = "https://backend-n8n-94uk.onrender.com";
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { user, token } = useAuth();
