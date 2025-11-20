@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 
 // Định nghĩa base URL từ biến môi trường
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = "https://backend-n8n-94uk.onrender.com";
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
