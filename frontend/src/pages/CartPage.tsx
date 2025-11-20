@@ -1,25 +1,23 @@
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 
-interface CartPageProps {
-  onCheckout: () => void;
-  onContinueShopping: () => void;
-}
-
 export default function CartPage({
   onCheckout,
   onContinueShopping,
-}: CartPageProps) {
-  const { items, removeFromCart, updateQuantity, total, itemCount } = useCart();
+}: {
+  onCheckout: () => void;
+  onContinueShopping: () => void;
+}) {
+  const { cartItems, cartTotal, updateItemQuantity, removeItem, totalItems } =
+    useCart();
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(price);
-  };
 
-  if (items.length === 0) {
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,12 +45,12 @@ export default function CartPage({
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Giỏ hàng ({itemCount} sản phẩm)
+          Giỏ hàng ({totalItems} sản phẩm)
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
+            {cartItems.map((item) => (
               <div
                 key={item.product.id}
                 className="bg-white rounded-lg shadow-md p-6 flex gap-4"
@@ -74,7 +72,7 @@ export default function CartPage({
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() =>
-                        updateQuantity(item.product.id, item.quantity - 1)
+                        updateItemQuantity(item.product.id, item.quantity - 1)
                       }
                       className="p-1 rounded border border-gray-300 hover:bg-gray-100 transition-colors"
                     >
@@ -85,7 +83,7 @@ export default function CartPage({
                     </span>
                     <button
                       onClick={() =>
-                        updateQuantity(item.product.id, item.quantity + 1)
+                        updateItemQuantity(item.product.id, item.quantity + 1)
                       }
                       disabled={item.quantity >= item.product.stock}
                       className="p-1 rounded border border-gray-300 hover:bg-gray-100 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -97,7 +95,7 @@ export default function CartPage({
 
                 <div className="flex flex-col items-end justify-between">
                   <button
-                    onClick={() => removeFromCart(item.product.id)}
+                    onClick={() => removeItem(item.product.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={20} />
@@ -117,7 +115,7 @@ export default function CartPage({
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Tạm tính</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển</span>
@@ -125,7 +123,9 @@ export default function CartPage({
                 </div>
                 <div className="border-t pt-3 flex justify-between text-lg font-bold">
                   <span>Tổng cộng</span>
-                  <span className="text-blue-600">{formatPrice(total)}</span>
+                  <span className="text-blue-600">
+                    {formatPrice(cartTotal)}
+                  </span>
                 </div>
               </div>
 

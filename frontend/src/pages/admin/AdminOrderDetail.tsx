@@ -1,88 +1,88 @@
-import { Package, Truck, CheckCircle } from "lucide-react";
-import { useOrder } from "../contexts/OrderContext";
-import { Order } from "../types";
+import { Order } from "../../types";
+import { Package, CheckCircle, Clock, XCircle } from "lucide-react";
 
-interface OrdersPageProps {
-  onNavigateHome: () => void;
+interface OrderDetailModalProps {
+  orders: Order[];
+  onClose: () => void;
 }
 
-export default function OrdersPage({ onNavigateHome }: OrdersPageProps) {
-  const { orders = [] } = useOrder();
+interface StatusInfo {
+  text: string;
+  color: string;
+  icon?: React.ElementType;
+}
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
-  };
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
+};
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
-  const getStatusInfo = (status: Order["status"]) => {
-    switch (status) {
-      case "pending":
-        return {
-          text: "Chờ xử lý",
-          color: "bg-yellow-100 text-yellow-800",
-          icon: Package,
-        };
-      case "processing":
-        return {
-          text: "Đang xử lý",
-          color: "bg-blue-100 text-blue-800",
-          icon: Package,
-        };
-      case "shipped":
-        return {
-          text: "Đang giao",
-          color: "bg-purple-100 text-purple-800",
-          icon: Truck,
-        };
-      case "delivered":
-        return {
-          text: "Đã giao",
-          color: "bg-green-100 text-green-800",
-          icon: CheckCircle,
-        };
-    }
-  };
-
-  if (!orders || orders.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Package size={64} className="mx-auto text-gray-400 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Chưa có đơn hàng
-            </h2>
-            <p className="text-gray-600 mb-8">Bạn chưa có đơn hàng nào</p>
-            <button
-              onClick={onNavigateHome}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Mua sắm ngay
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+const getStatusInfo = (status: string): StatusInfo | null => {
+  switch (status) {
+    case "pending":
+      return {
+        text: "Chờ xử lý",
+        color: "bg-yellow-100 text-yellow-800",
+        icon: Clock,
+      };
+    case "processing":
+      return {
+        text: "Đang xử lý",
+        color: "bg-blue-100 text-blue-800",
+        icon: Package,
+      };
+    case "shipped":
+      return {
+        text: "Đang giao",
+        color: "bg-purple-100 text-purple-800",
+        icon: Package,
+      };
+    case "delivered":
+      return {
+        text: "Đã giao",
+        color: "bg-green-100 text-green-800",
+        icon: CheckCircle,
+      };
+    case "cancelled":
+      return {
+        text: "Đã hủy",
+        color: "bg-red-100 text-red-800",
+        icon: XCircle,
+      };
+    default:
+      return null;
   }
+};
+
+export default function OrderDetailModal({
+  orders,
+  onClose,
+}: OrderDetailModalProps) {
+  if (!orders || orders.length === 0) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Đơn hàng của tôi
-        </h1>
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-start overflow-auto z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-3xl mt-12 p-6 space-y-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-xl font-bold"
+        >
+          ✖
+        </button>
+
+        <h2 className="text-2xl font-bold mb-4">Chi tiết đơn hàng</h2>
 
         <div className="space-y-6">
           {orders.map((order) => {
@@ -92,8 +92,9 @@ export default function OrdersPage({ onNavigateHome }: OrdersPageProps) {
             return (
               <div
                 key={order.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden"
+                className="bg-white rounded-lg shadow-md overflow-hidden border"
               >
+                {/* Header */}
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                   <div className="flex justify-between items-center">
                     <div>
@@ -104,17 +105,18 @@ export default function OrdersPage({ onNavigateHome }: OrdersPageProps) {
                         {formatDate(order.createdAt)}
                       </p>
                     </div>
-                    {statusInfo ? (
+                    {statusInfo && (
                       <span
                         className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${statusInfo.color}`}
                       >
                         {StatusIcon && <StatusIcon size={18} />}
                         {statusInfo.text}
                       </span>
-                    ) : null}
+                    )}
                   </div>
                 </div>
 
+                {/* Items */}
                 <div className="p-6">
                   <div className="space-y-4 mb-6">
                     {order.items.map((item) => (
@@ -139,6 +141,7 @@ export default function OrdersPage({ onNavigateHome }: OrdersPageProps) {
                     ))}
                   </div>
 
+                  {/* Address & Total */}
                   <div className="border-t pt-4">
                     <div className="flex justify-between items-center mb-4">
                       <div>

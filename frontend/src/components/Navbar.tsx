@@ -1,16 +1,20 @@
-import { ShoppingCart, User, LogOut, Package } from "lucide-react";
+import { ShoppingCart, User, LogOut, Package, Settings } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useCart } from "../contexts/CartContext";
-import type { Page } from "../App";
 
 interface NavbarProps {
-  onNavigate: (page: Page) => void;
-  currentPage: Page;
+  onNavigate: (page: string) => void;
+  currentPage: string;
+  isAdmin?: boolean;
 }
 
-export default function Navbar({ onNavigate, currentPage }: NavbarProps) {
-  const { user, logout } = useAuth();
-  const { itemCount } = useCart();
+export default function Navbar({
+  onNavigate,
+  currentPage,
+  isAdmin,
+}: NavbarProps) {
+  const { user, signOut } = useAuth();
+  const { totalItems } = useCart();
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -39,33 +43,47 @@ export default function Navbar({ onNavigate, currentPage }: NavbarProps) {
                   <User size={20} />
                   <span className="hidden sm:inline">{user.name}</span>
                 </button>
+                <>
+                  <button
+                    onClick={() => onNavigate("orders")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                      currentPage === "orders"
+                        ? "bg-blue-50 text-blue-600"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Package size={20} />
+                    <span className="hidden sm:inline">Đơn hàng</span>
+                  </button>
+                  <button
+                    onClick={() => onNavigate("cart")}
+                    className="relative flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <ShoppingCart size={20} />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {totalItems}
+                      </span>
+                    )}
+                  </button>
+                </>
+
+                {isAdmin && (
+                  <button
+                    onClick={() => onNavigate("admin-dashboard")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                      currentPage.startsWith("admin-")
+                        ? "bg-yellow-50 text-yellow-600"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Settings size={20} />
+                    <span className="hidden sm:inline">Admin</span>
+                  </button>
+                )}
 
                 <button
-                  onClick={() => onNavigate("orders")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    currentPage === "orders"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <Package size={20} />
-                  <span className="hidden sm:inline">Đơn hàng</span>
-                </button>
-
-                <button
-                  onClick={() => onNavigate("cart")}
-                  className="relative flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  <ShoppingCart size={20} />
-                  {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  onClick={logout}
+                  onClick={signOut}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
                 >
                   <LogOut size={20} />

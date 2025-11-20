@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Lock, User } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { isAxiosError } from "axios";
 
 interface RegisterPageProps {
   onSuccess: () => void;
@@ -16,27 +17,42 @@ export default function RegisterPage({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const { signup } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     if (password !== confirmPassword) {
-      setError("Mật khẩu không khớp");
+      setError("Mật khẩu không khớp.");
+      setIsSubmitting(false);
       return;
     }
 
     if (password.length < 6) {
-      setError("Mật khẩu phải có ít nhất 6 ký tự");
+      setError("Mật khẩu phải có ít nhất 6 ký tự.");
+      setIsSubmitting(false);
       return;
     }
 
-    const success = await signup(email, password, name);
-    if (success) {
+    try {
+      await signUp({ email, password, name });
       onSuccess();
-    } else {
-      setError("Email đã được sử dụng");
+    } catch (err) {
+      let errorMessage = "Đăng ký thất bại. Vui lòng kiểm tra kết nối.";
+
+      // Xử lý lỗi từ Backend (ví dụ: Email đã tồn tại)
+      if (isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -57,7 +73,6 @@ export default function RegisterPage({
                 {error}
               </div>
             )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Họ và tên
@@ -74,10 +89,12 @@ export default function RegisterPage({
                   onChange={(e) => setName(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nguyễn Văn A"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
+            {/* Field Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -94,10 +111,12 @@ export default function RegisterPage({
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="example@email.com"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
+            {/* Field Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mật khẩu
@@ -114,10 +133,12 @@ export default function RegisterPage({
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="••••••••"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
+            {/* Field Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Xác nhận mật khẩu
@@ -134,15 +155,21 @@ export default function RegisterPage({
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="••••••••"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
+              disabled={isSubmitting}
+              className={`w-full py-3 text-white rounded-lg transition-colors font-semibold text-lg ${
+                isSubmitting
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
             >
-              Đăng ký
+              {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
             </button>
           </form>
 
@@ -152,6 +179,7 @@ export default function RegisterPage({
               <button
                 onClick={onNavigateLogin}
                 className="text-blue-600 hover:text-blue-700 font-semibold"
+                disabled={isSubmitting}
               >
                 Đăng nhập ngay
               </button>

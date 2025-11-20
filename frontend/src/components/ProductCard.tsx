@@ -58,7 +58,7 @@ export default function ProductCard({
           <Star size={16} className="fill-yellow-400 text-yellow-400" />
           <span className="font-semibold text-sm">{product.rating}</span>
           <span className="text-gray-500 text-sm">
-            ({product.reviews} đánh giá)
+            ({product.reviewsCount} đánh giá)
           </span>
         </div>
 

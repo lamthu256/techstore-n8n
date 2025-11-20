@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useOrders } from "../contexts/OrderContext";
+import { useOrder } from "../contexts/OrderContext";
 import { Address } from "../types";
 import { CheckCircle } from "lucide-react";
 
-interface CheckoutPageProps {
+type CheckoutPageProps = {
   onComplete: () => void;
-}
+};
 
 export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
-  const { items, total, clearCart } = useCart();
+  const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
-  const { addOrder } = useOrders();
+  const { createOrder } = useOrder();
   const [showSuccess, setShowSuccess] = useState(false);
   const [address, setAddress] = useState<Address>({
     fullName: user?.name || "",
@@ -29,27 +29,28 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
 
     try {
-      await addOrder({
-        userId: user.id,
-        items: items.map((item) => ({
-          id: item.id,
-          productId: item.product.id,
-          name: item.product.name,
-          image: item.product.image,
+      const orderPayload = {
+        items: cartItems.map((item) => ({
+          product: {
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            image: item.product.image,
+          },
           quantity: item.quantity,
-          price: item.product.price,
         })),
-        total,
-        address: address,
-      });
+        total: cartTotal,
+        address,
+      };
 
+      await createOrder(orderPayload);
       clearCart();
       setShowSuccess(true);
     } catch (err) {
       console.error("Checkout error:", err);
+      alert("Đặt hàng thất bại. Vui lòng thử lại.");
     }
   };
 
@@ -149,7 +150,7 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
               <h2 className="text-xl font-bold mb-6">Đơn hàng của bạn</h2>
 
               <div className="space-y-4 mb-6">
-                {items.map((item) => (
+                {cartItems.map((item) => (
                   <div key={item.product.id} className="flex gap-3">
                     <img
                       src={item.product.image}
@@ -172,7 +173,7 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
               <div className="space-y-3 border-t pt-4">
                 <div className="flex justify-between text-gray-600">
                   <span>Tạm tính</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển</span>
@@ -180,7 +181,9 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
                 </div>
                 <div className="border-t pt-3 flex justify-between text-lg font-bold">
                   <span>Tổng cộng</span>
-                  <span className="text-blue-600">{formatPrice(total)}</span>
+                  <span className="text-blue-600">
+                    {formatPrice(cartTotal)}
+                  </span>
                 </div>
               </div>
             </div>

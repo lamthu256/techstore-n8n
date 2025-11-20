@@ -1,151 +1,132 @@
-import {
+import React, {
   createContext,
   useContext,
-  useEffect,
   useState,
+  useEffect,
   ReactNode,
 } from "react";
-import { Product } from "../types";
-import { useAuth } from "./AuthContext";
+import type { Product } from "../types";
+import * as productApi from "../api/productService";
 
-interface ProductContextType {
+export interface ProductContextType {
   products: Product[];
-  loading: boolean;
-  error: string | null;
-  fetchProducts: () => Promise<void>;
-  getProductById: (id: string) => Product | undefined;
-  // createProduct: (product: Omit<Product, "id" | "createdAt">) => Promise<void>;
-  // updateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
-  // deleteProduct: (id: string) => Promise<void>;
+  isLoading: boolean;
+  error: any;
+  getProducts: () => Promise<void>;
+  getProductDetails: (id: string) => Promise<Product | null>;
+  createProduct: (data: any) => Promise<void>;
+  updateProduct: (id: string, data: any) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
-const API_URL = "https://backend-n8n-94uk.onrender.com/products";
 
-export function ProductProvider({ children }: { children: ReactNode }) {
-  const { token } = useAuth();
+export const ProductProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
 
-  const fetchProducts = async () => {
-    if (!token) return;
+  const getProducts = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const res = await fetch(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch products");
-      const data = await res.json();
+      const data = await productApi.getProducts();
       setProducts(data);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message);
+      setError(null);
+    } catch (err) {
+      setError(err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const getProductById = (id: string) => products.find((p) => p.id === id);
+  useEffect(() => {
+    getProducts();
+  }, []);
 
-  // const createProduct = async (product: Omit<Product, "id" | "createdAt">) => {
-  //   if (!token) return;
-  //   try {
-  //     const res = await fetch(API_URL, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({ ...product, image_url: product.image }),
-  //     });
-  //     if (!res.ok) throw new Error("Failed to create product");
-  //     const newProduct = await res.json();
-  //     setProducts((prev) => [
-  //       {
-  //         ...newProduct,
-  //         imageUrl: newProduct.image_url,
-  //         createdAt: newProduct.created_at,
-  //       },
-  //       ...prev,
-  //     ]);
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     setError(err.message);
-  //   }
-  // };
+  const getProductDetails = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const product = await productApi.getProductDetails(id);
+      setError(null);
+      return product;
+    } catch (err) {
+      setError(err);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // const updateProduct = async (id: string, updates: Partial<Product>) => {
-  //   if (!token) return;
-  //   try {
-  //     const res = await fetch(`${API_URL}/${id}`, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({ ...updates, image_url: updates.image }),
-  //     });
-  //     if (!res.ok) throw new Error("Failed to update product");
-  //     const updated = await res.json();
-  //     setProducts((prev) =>
-  //       prev.map((p) =>
-  //         p.id === id
-  //           ? {
-  //               ...p,
-  //               ...updated,
-  //               imageUrl: updated.image_url,
-  //               createdAt: updated.created_at,
-  //             }
-  //           : p
-  //       )
-  //     );
-  //   } catch (err: any) {
-  //     console.error(err);
-  //     setError(err.message);
-  //   }
-  // };
+  const createProduct = async (data: any) => {
+    setIsLoading(true);
+    try {
+      await productApi.createProduct(data);
+      await getProducts();
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // const deleteProduct = async (id: string) => {
-  // if (!token) return;
-  // try {
-  //   const res = await fetch(`${API_URL}/${id}`, {
-  //     method: "DELETE",
-  //     headers: { Authorization: `Bearer ${token}` },
-  //   });
-  //   if (!res.ok) throw new Error("Failed to delete product");
-  //   setProducts((prev) => prev.filter((p) => p.id !== id));
-  // } catch (err: any) {
-  //   console.error(err);
-  //   setError(err.message);
-  // }
-  // };
+  const updateProduct = async (id: string, data: any) => {
+    setIsLoading(true);
+    try {
+      await productApi.updateProduct(id, data);
+      await getProducts();
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    setIsLoading(true);
+    try {
+      await productApi.deleteProduct(id);
+      await getProducts();
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (token) fetchProducts();
-  }, [token]);
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "token") {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const value: ProductContextType = {
+    products,
+    isLoading,
+    error,
+    getProducts,
+    getProductDetails,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+  };
 
   return (
-    <ProductContext.Provider
-      value={{
-        products,
-        loading,
-        error,
-        fetchProducts,
-        getProductById,
-        // createProduct,
-        // updateProduct,
-        // deleteProduct,
-      }}
-    >
-      {children}
-    </ProductContext.Provider>
+    <ProductContext.Provider value={value}>{children}</ProductContext.Provider>
   );
-}
+};
 
-export function useProducts() {
+export const useProduct = (): ProductContextType => {
   const context = useContext(ProductContext);
   if (!context)
-    throw new Error("useProducts must be used within ProductProvider");
+    throw new Error("useProduct must be used within a ProductProvider");
   return context;
-}
+};

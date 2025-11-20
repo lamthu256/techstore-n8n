@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { useProducts } from "../contexts/ProductContext";
-import { useCart } from "../contexts/CartContext";
 import { Product } from "../types";
 import ProductCard from "../components/ProductCard";
+import { useProduct } from "../contexts/ProductContext";
+import { useCart } from "../contexts/CartContext";
 
 interface HomePageProps {
   onViewDetail: (product: Product) => void;
@@ -12,8 +12,8 @@ interface HomePageProps {
 export default function HomePage({ onViewDetail }: HomePageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const { addToCart } = useCart();
-  const { products, loading, error } = useProducts();
+  const { products, isLoading, error } = useProduct();
+  const { addItem } = useCart();
 
   const categories = [
     { id: "all", name: "Tất cả" },
@@ -26,7 +26,9 @@ export default function HomePage({ onViewDetail }: HomePageProps) {
     { id: "accessory", name: "Phụ kiện" },
   ];
 
-  const filteredProducts = products.filter((product) => {
+  const productsToFilter = products || [];
+
+  const filteredProducts = productsToFilter.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -36,7 +38,7 @@ export default function HomePage({ onViewDetail }: HomePageProps) {
   });
 
   const handleAddToCart = (product: Product) => {
-    addToCart(product);
+    addItem(product.id, 1);
   };
 
   return (
@@ -83,20 +85,27 @@ export default function HomePage({ onViewDetail }: HomePageProps) {
           ))}
         </div>
 
-        {loading ? (
-          <p className="text-center text-gray-500 py-16">
-            Đang tải sản phẩm...
-          </p>
-        ) : error ? (
-          <p className="text-center text-red-500 py-16">{error}</p>
-        ) : (
-          <>
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {filteredProducts.length} sản phẩm
-              </h2>
-            </div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {isLoading ? "Đang tải..." : `${filteredProducts.length} sản phẩm`}
+          </h2>
+        </div>
 
+        {/* Xử lý trạng thái Loading và Error */}
+        {isLoading && (
+          <div className="text-center py-16 text-blue-600 text-lg">
+            Đang tải sản phẩm...
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-16 text-red-600 text-lg">
+            Lỗi tải dữ liệu: {(error as Error).message}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard

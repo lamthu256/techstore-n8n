@@ -1,26 +1,30 @@
-import { useState } from 'react';
-import { Star, ShoppingCart, Minus, Plus, ArrowLeft } from 'lucide-react';
-import { Product } from '../types';
-import { useCart } from '../contexts/CartContext';
+import { useState } from "react";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Star } from "lucide-react";
+import { Product } from "../types";
+import { useCart } from "../contexts/CartContext";
+import ProductReviews from "./ProductReviews";
 
 interface ProductDetailPageProps {
   product: Product;
   onBack: () => void;
 }
 
-export default function ProductDetailPage({ product, onBack }: ProductDetailPageProps) {
+export default function ProductDetailPage({
+  product,
+  onBack,
+}: ProductDetailPageProps) {
   const [quantity, setQuantity] = useState(1);
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(price);
   };
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    addItem(product.id, quantity);
     setQuantity(1);
   };
 
@@ -46,9 +50,11 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
             </div>
 
             <div className="flex flex-col">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {product.name}
+              </h1>
 
-              <div className="flex items-center gap-2 mb-6">
+              {/* <div className="flex items-center gap-2 mb-6">
                 <div className="flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star
@@ -56,17 +62,21 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
                       size={20}
                       className={
                         i < Math.floor(product.rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
                       }
                     />
                   ))}
                 </div>
                 <span className="font-semibold">{product.rating}</span>
-                <span className="text-gray-500">({product.reviews} đánh giá)</span>
-              </div>
+                <span className="text-gray-500">
+                  ({product.reviewsCount} đánh giá)
+                </span>
+              </div> */}
 
-              <p className="text-gray-600 mb-6 leading-relaxed">{product.description}</p>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                {product.description}
+              </p>
 
               <div className="mb-6">
                 <span className="text-4xl font-bold text-blue-600">
@@ -78,17 +88,17 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
                 <span
                   className={`inline-block px-4 py-2 rounded-lg font-semibold ${
                     product.stock > 10
-                      ? 'bg-green-100 text-green-700'
+                      ? "bg-green-100 text-green-700"
                       : product.stock > 0
-                      ? 'bg-orange-100 text-orange-700'
-                      : 'bg-red-100 text-red-700'
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-red-100 text-red-700"
                   }`}
                 >
                   {product.stock > 10
-                    ? 'Còn hàng'
+                    ? "Còn hàng"
                     : product.stock > 0
                     ? `Chỉ còn ${product.stock} sản phẩm`
-                    : 'Hết hàng'}
+                    : "Hết hàng"}
                 </span>
               </div>
 
@@ -105,9 +115,13 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
                       >
                         <Minus size={20} />
                       </button>
-                      <span className="text-xl font-semibold w-16 text-center">{quantity}</span>
+                      <span className="text-xl font-semibold w-16 text-center">
+                        {quantity}
+                      </span>
                       <button
-                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                        onClick={() =>
+                          setQuantity(Math.min(product.stock, quantity + 1))
+                        }
                         className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition-colors"
                       >
                         <Plus size={20} />
@@ -126,6 +140,10 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mt-12">
+          <ProductReviews productId={product.id} />
         </div>
       </div>
     </div>

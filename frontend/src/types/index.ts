@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  role?: "admin" | "user";
   createdAt: string;
 }
 
@@ -14,13 +15,31 @@ export interface Product {
   category: string;
   stock: number;
   rating: number;
-  reviews: number;
+  reviewsCount: number;
+  createdAt: string;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface Address {
+  fullName: string;
+  phone: string;
+  street: string;
 }
 
 export interface CartItem {
   id: string;
   product: Product;
   quantity: number;
+  createdAt?: string;
 }
 
 export interface OrderItem {
@@ -37,16 +56,19 @@ export interface Order {
   userId: string;
   items: OrderItem[];
   total: number;
-  status: "pending" | "processing" | "shipped" | "delivered";
-  createdAt: string;
   address: Address;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  createdAt: string;
 }
 
-export interface Address {
-  fullName: string;
-  phone: string;
-  street: string;
-  // city: string;
-  // state: string;
-  // note: string;
+export interface CustomerProfile {
+  id: string;
+  user: {
+    name: string;
+    email: string;
+  };
+  totalOrders: number;
+  totalSpent: number;
+  createdAt: string;
+  updatedAt: string;
 }
