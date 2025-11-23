@@ -1,18 +1,20 @@
 import { Request, Response } from "express";
 import { pool } from "../db";
 
-// Lấy tất cả danh sách giỏ hàng của từng user (Admin)
-export const getCartItems = async (req: Request, res: Response) => {
+// Lấy giỏ hàng của từng user (Admin)
+export const getUserCarts = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
-      `SELECT u.name, u.email, json_build_object('name', p.name, 'price', p.price, 'image', p.image, 'quantity', c.quantity, 'created_at', c.created_at) as cart_item
+      `SELECT u.name, u.email, 
+          COUNT(c.product_id) AS item_count, MAX(c.created_at) AS last_cart_date
        FROM cart_items c
-       JOIN products p ON c.product_id = p.id
-       JOIN users u ON c.user_id = u.id`
+       JOIN users u ON c.user_id = u.id
+       GROUP BY u.id, u.name, u.email
+       ORDER BY last_cart_date DESC;`
     );
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching cart items" });
+    res.status(500).json({ message: "Error fetching cart counts" });
   }
 };
 
