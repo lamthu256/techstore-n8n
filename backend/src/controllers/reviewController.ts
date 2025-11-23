@@ -1,9 +1,8 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { pool } from "../db";
-import { AuthRequest } from "../middleware/authMiddleware";
 
 // Lấy danh sách review của 1 sản phẩm
-export const getProductReviews = async (req: AuthRequest, res: Response) => {
+export const getProductReviews = async (req: Request, res: Response) => {
   const { productId } = req.params;
   try {
     const result = await pool.query(
@@ -21,8 +20,8 @@ export const getProductReviews = async (req: AuthRequest, res: Response) => {
 };
 
 // Thêm review (User)
-export const addReview = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+export const addReview = async (req: Request, res: Response) => {
+  const userId = req.body.userId;
   const { productId } = req.params;
   const { rating, comment } = req.body;
 
@@ -52,8 +51,8 @@ export const addReview = async (req: AuthRequest, res: Response) => {
 };
 
 // Xóa Review (User xóa của mình hoặc Admin xóa bất kỳ)
-export const deleteReview = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+export const deleteReview = async (req: Request, res: Response) => {
+  const userId = (req.query?.userId || req.body?.userId) as string;
   const { id } = req.params; // Review ID
 
   try {

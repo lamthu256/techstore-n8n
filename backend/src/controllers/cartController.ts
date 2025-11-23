@@ -1,10 +1,10 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { pool } from "../db";
-import { AuthRequest } from "../middleware/authMiddleware";
 
 // Lấy giỏ hàng
-export const getCart = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+export const getCart = async (req: Request, res: Response) => {
+  const userId = req.query.userId as string;
+
   try {
     const result = await pool.query(
       `SELECT c.id, c.quantity, 
@@ -21,9 +21,8 @@ export const getCart = async (req: AuthRequest, res: Response) => {
 };
 
 // Thêm vào giỏ (Upsert)
-export const addToCart = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { productId, quantity } = req.body;
+export const addToCart = async (req: Request, res: Response) => {
+  const { userId, productId, quantity } = req.body;
 
   try {
     // Sử dụng cú pháp ON CONFLICT để update nếu đã tồn tại (nhờ constraint unique user_id, product_id)
@@ -42,9 +41,9 @@ export const addToCart = async (req: AuthRequest, res: Response) => {
 };
 
 // Cập nhật số lượng cụ thể
-export const updateCartItem = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { productId, quantity } = req.body; // quantity mới
+export const updateCartItem = async (req: Request, res: Response) => {
+  const { userId, productId, quantity } = req.body;
+
   try {
     if (quantity <= 0) {
       await pool.query(
@@ -64,8 +63,8 @@ export const updateCartItem = async (req: AuthRequest, res: Response) => {
 };
 
 // Xóa khỏi giỏ
-export const removeFromCart = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+export const removeFromCart = async (req: Request, res: Response) => {
+  const userId = req.query.userId as string;
   const { productId } = req.params;
   try {
     await pool.query(

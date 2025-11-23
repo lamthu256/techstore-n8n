@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { pool } from "../db";
+import api from "./axios";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -33,8 +34,24 @@ export const getProductById = async (req: Request, res: Response) => {
 
 // 1. Tạo sản phẩm mới (Admin)
 export const createProduct = async (req: Request, res: Response) => {
-  const { name, description, price, image, category, stock } = req.body;
+  let { name, description, price, image, category, stock } = req.body;
+
   try {
+    try {
+      const n8nResponse = await api.post("/add-product", {
+        name,
+        description,
+        price,
+        image,
+        category,
+      });
+      const validated = n8nResponse.data;
+      description = validated.description || description;
+      image = validated.image || image;
+    } catch (err: any) {
+      console.error("n8n webhook error:", err.message);
+    }
+
     const result = await pool.query(
       `INSERT INTO products (name, description, price, image, category, stock)
        VALUES ($1, $2, $3, $4, $5, $6)

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { pool } from "../db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import api from "./axios";
 
 // REGISTER
 export const register = async (req: Request, res: Response) => {
@@ -30,6 +31,16 @@ export const register = async (req: Request, res: Response) => {
       process.env.JWT_SECRET || "secret_key",
       { expiresIn: "1d" }
     );
+
+    const userData = newUser.rows[0];
+
+    // Gọi n8n webhook
+    api
+      .post("/user-registered", {
+        email: userData.email,
+        name: userData.name,
+      })
+      .catch((err) => console.error("n8n webhook error:", err));
 
     res.json({ token, user: newUser.rows[0] });
   } catch (err) {

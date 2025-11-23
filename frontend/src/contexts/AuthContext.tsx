@@ -67,8 +67,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const signIn = async (credentials: { email: string; password: string }) => {
     const response = await login(credentials);
     localStorage.setItem("token", response.token);
-    setToken(response.token);
     setUser(response.user);
+    setToken(response.token);
   };
 
   // Register
@@ -79,8 +79,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }) => {
     const response = await register(data);
     localStorage.setItem("token", response.token);
-    setToken(response.token);
     setUser(response.user);
+    setToken(response.token);
   };
 
   // Logout

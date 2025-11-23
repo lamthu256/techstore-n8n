@@ -6,17 +6,14 @@ import {
   updateProduct,
   deleteProduct,
 } from "../controllers/productController";
-import { verifyToken, verifyAdmin } from "../middleware/authMiddleware";
 
 const router = Router();
 
-// Public routes
+// All routes
 router.get("/", getProducts);
 router.get("/:id", getProductById);
-
-// Admin routes (Cần đăng nhập + Quyền Admin)
-router.post("/", verifyToken, verifyAdmin, createProduct);
-router.put("/:id", verifyToken, verifyAdmin, updateProduct);
-router.delete("/:id", verifyToken, verifyAdmin, deleteProduct);
+router.post("/", createProduct);
+router.put("/:id", updateProduct);
+router.delete("/:id", deleteProduct);
 
 export default router;

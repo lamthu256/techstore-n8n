@@ -8,6 +8,7 @@ import React, {
 import { ProductReview } from "../types";
 import * as reviewApi from "../api/reviewService";
 import { useProduct } from "./ProductContext";
+import { useAuth } from "./AuthContext";
 
 export interface ReviewContextType {
   reviews: ProductReview[];
@@ -27,6 +28,7 @@ export const ReviewProvider: React.FC<{
   children: ReactNode;
   productId: string;
 }> = ({ children, productId }) => {
+  const { user } = useAuth();
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(null);
@@ -49,9 +51,10 @@ export const ReviewProvider: React.FC<{
     productId: string,
     data: { rating: number; comment: string }
   ) => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      await reviewApi.addReview(productId, data);
+      await reviewApi.addReview(user.id, productId, data);
       await getReviews(productId);
       await getProducts();
       setError(null);
@@ -63,9 +66,10 @@ export const ReviewProvider: React.FC<{
   };
 
   const deleteReview = async (reviewId: string) => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      await reviewApi.deleteReview(reviewId);
+      await reviewApi.deleteReview(user.id, reviewId);
       await getReviews(productId);
       await getProducts();
       setError(null);

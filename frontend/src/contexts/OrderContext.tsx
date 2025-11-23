@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useCallback,
+} from "react";
 import { Order, Address } from "../types";
 import * as orderApi from "../api/orderService";
 import { useAuth } from "./AuthContext";
@@ -30,30 +36,14 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(null);
 
-  const createOrder = async (data: {
-    items: any[];
-    total: number;
-    address: Address;
-  }) => {
-    setIsLoading(true);
-    try {
-      const result = await orderApi.createOrder(data);
-      await getOrders();
-      setError(null);
-      return result.orderId || null;
-    } catch (err) {
-      setError(err);
-      return null;
-    } finally {
-      setIsLoading(false);
+  const getOrders = useCallback(async () => {
+    if (!user) {
+      setOrders([]);
+      return;
     }
-  };
-
-  const getOrders = async () => {
-    if (!user) return;
     setIsLoading(true);
     try {
-      const data = await orderApi.getOrders();
+      const data = await orderApi.getOrders(user.id);
       setOrders(data);
       setError(null);
     } catch (err) {
@@ -61,15 +51,30 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   React.useEffect(() => {
-    if (user) {
-      getOrders();
-    } else {
-      setOrders([]);
-    }
-  }, [user]);
+    getOrders();
+  }, [getOrders]);
+
+  const createOrder = useCallback(
+    async (data: { items: any[]; total: number; address: Address }) => {
+      if (!user) return null;
+      setIsLoading(true);
+      try {
+        const result = await orderApi.createOrder(user.id, data);
+        await getOrders();
+        setError(null);
+        return result.orderId || null;
+      } catch (err) {
+        setError(err);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user, getOrders]
+  );
 
   // Admin: lấy tất cả đơn hàng
   const getAllOrders = async () => {

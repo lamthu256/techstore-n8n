@@ -1,11 +1,39 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { pool } from "../db";
-import { AuthRequest } from "../middleware/authMiddleware";
+
+// GET USER ORDERS
+export const getOrders = async (req: Request, res: Response) => {
+  const userId = req.query.userId as string;
+
+  try {
+    const ordersResult = await pool.query(
+      `SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    const ordersWithItems = [];
+
+    for (const order of ordersResult.rows) {
+      const itemsResult = await pool.query(
+        `SELECT oi.*, p.name, p.image
+         FROM order_items oi
+         JOIN products p ON oi.product_id = p.id
+         WHERE oi.order_id = $1`,
+        [order.id]
+      );
+      ordersWithItems.push({ ...order, items: itemsResult.rows });
+    }
+
+    res.json(ordersWithItems);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching orders" });
+  }
+};
 
 // CREATE ORDER
-export const createOrder = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-  const { address, items, total } = req.body;
+export const createOrder = async (req: Request, res: Response) => {
+  const { userId, address, items, total } = req.body;
 
   if (!items || items.length === 0) {
     return res.status(400).json({ message: "Order must have items" });
@@ -46,42 +74,8 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// GET USER ORDERS
-export const getOrders = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
-
-  try {
-    const ordersResult = await pool.query(
-      `SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC`,
-      [userId]
-    );
-
-    const ordersWithItems = [];
-
-    for (const order of ordersResult.rows) {
-      const itemsResult = await pool.query(
-        `SELECT oi.*, p.name, p.image
-         FROM order_items oi
-         JOIN products p ON oi.product_id = p.id
-         WHERE oi.order_id = $1`,
-        [order.id]
-      );
-      ordersWithItems.push({ ...order, items: itemsResult.rows });
-    }
-
-    res.json(ordersWithItems);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error fetching orders" });
-  }
-};
-
 // ADMIN: GET ALL ORDERS
-export const getAllOrders = async (req: AuthRequest, res: Response) => {
-  if (req.user?.role !== "admin") {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-
+export const getAllOrders = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT o.*, u.name AS user_name, u.email AS user_email
@@ -97,7 +91,7 @@ export const getAllOrders = async (req: AuthRequest, res: Response) => {
 };
 
 // ADMIN: GET ORDER DETAIL
-export const getOrderById = async (req: AuthRequest, res: Response) => {
+export const getOrderById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -125,13 +119,9 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
 };
 
 // ADMIN: UPDATE ORDER STATUS
-export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
+export const updateOrderStatus = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
-
-  if (req.user?.role !== "admin") {
-    return res.status(403).json({ message: "Forbidden" });
-  }
 
   try {
     const orderResult = await pool.query(

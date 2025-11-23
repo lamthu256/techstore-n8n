@@ -20,14 +20,18 @@ export const getProductReviews = async (
 };
 
 export const addReview = async (
+  userId: string,
   productId: string,
   data: { rating: number; comment: string }
 ): Promise<ProductReview> => {
-  const res = await api.post(`/reviews/${productId}`, data);
+  const res = await api.post(`/reviews/${productId}`, { userId, ...data });
   return res.data;
 };
 
-export const deleteReview = async (reviewId: string): Promise<void> => {
-  const res = await api.delete(`/reviews/${reviewId}`);
+export const deleteReview = async (
+  userId: string,
+  reviewId: string
+): Promise<void> => {
+  const res = await api.delete(`/reviews/${reviewId}`, { params: { userId } });
   return res.data;
 };

@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import { CartItem } from "../types";
 import * as cartApi from "../api/cartService";
@@ -27,28 +28,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadCart = async () => {
-      if (!user) {
-        setCartItems([]);
-        setIsLoading(false);
-        return;
-      }
+  const loadCart = useCallback(async () => {
+    if (!user) {
+      setCartItems([]);
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        setIsLoading(true);
-        const data = await cartApi.getCart();
-        setCartItems(data || []);
-      } catch (err) {
-        console.error("Failed to load cart:", err);
-        setCartItems([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCart();
+    try {
+      setIsLoading(true);
+      const data = await cartApi.getCart(user.id);
+      setCartItems(data || []);
+    } catch (err) {
+      console.error("Failed to load cart:", err);
+      setCartItems([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    loadCart();
+  }, [loadCart]);
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cartItems.reduce(
@@ -57,22 +58,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const addItem = async (productId: string, quantity: number) => {
+    if (!user) return;
     try {
-      await cartApi.addToCart(productId, quantity);
-      const data = await cartApi.getCart();
-      setCartItems(data || []);
+      await cartApi.addToCart(user.id, productId, quantity);
+      await loadCart();
     } catch (err) {
       console.error("Failed to add item:", err);
     }
   };
 
   const updateItemQuantity = async (productId: string, quantity: number) => {
+    if (!user) return;
     try {
       if (quantity <= 0) {
         await removeItem(productId);
         return;
       }
-      await cartApi.updateCartItem(productId, quantity);
+      await cartApi.updateCartItem(user.id, productId, quantity);
       setCartItems((prev) =>
         prev.map((item) =>
           item.product.id === productId ? { ...item, quantity } : item
@@ -84,8 +86,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeItem = async (productId: string) => {
+    if (!user) return;
     try {
-      await cartApi.removeFromCart(productId);
+      await cartApi.removeFromCart(user.id, productId);
       setCartItems((prev) =>
         prev.filter((item) => item.product.id !== productId)
       );
@@ -95,9 +98,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const clearCart = async () => {
+    if (!user) return;
     try {
       await Promise.all(
-        cartItems.map((item) => cartApi.removeFromCart(item.product.id))
+        cartItems.map((item) =>
+          cartApi.removeFromCart(user.id, item.product.id)
+        )
       );
       setCartItems([]);
     } catch (err) {

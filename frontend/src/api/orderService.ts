@@ -15,21 +15,22 @@ const mapOrder = (o: any): Order => ({
   address: o.address,
   status: o.status,
   createdAt: o.created_at,
-  items: o.items ?? [], // trong trường hợp API trả kèm items
+  items: o.items ?? [],
 });
+
+// User - Get User Orders
+export const getOrders = async (userId: string): Promise<Order[]> => {
+  const res = await api.get("/orders", { params: { userId } });
+  return res.data.map((o: any) => mapOrder(o));
+};
 
 // User - Create Order
 export const createOrder = async (
+  userId: string,
   data: CreateOrderDTO
 ): Promise<{ orderId: string }> => {
-  const res = await api.post("/orders", data);
+  const res = await api.post("/orders", { userId, ...data });
   return res.data; // không cần map
-};
-
-// User - Get User Orders
-export const getOrders = async (): Promise<Order[]> => {
-  const res = await api.get("/orders");
-  return res.data.map((o: any) => mapOrder(o));
 };
 
 // Admin - Get All Orders

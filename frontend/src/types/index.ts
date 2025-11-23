@@ -16,7 +16,7 @@ export interface Product {
   stock: number;
   rating: number;
   reviewsCount: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface ProductReview {

@@ -6,11 +6,8 @@ import {
   getAllOrders,
   updateOrderStatus,
 } from "../controllers/orderController";
-import { verifyToken } from "../middleware/authMiddleware";
 
 const router = Router();
-
-router.use(verifyToken);
 
 // Admin routes
 router.get("/admin", getAllOrders);
