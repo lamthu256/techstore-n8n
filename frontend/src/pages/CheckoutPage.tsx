@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useOrder } from "../contexts/OrderContext";
+import { useDiscount } from "../contexts/DiscountContext";
 import { Address } from "../types";
 import { CheckCircle } from "lucide-react";
+import { toggleDiscountCode } from "../api/discountService";
 
 type CheckoutPageProps = {
   onComplete: () => void;
@@ -13,6 +15,7 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const { createOrder } = useOrder();
+  const { appliedDiscount, setAppliedDiscount } = useDiscount();
   const [showSuccess, setShowSuccess] = useState(false);
   const [address, setAddress] = useState<Address>({
     fullName: user?.name || "",
@@ -31,6 +34,10 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
     e.preventDefault();
 
     try {
+      const discountAmount = appliedDiscount
+        ? (cartTotal * appliedDiscount.discount) / 100
+        : 0;
+
       const orderPayload = {
         items: cartItems.map((item) => ({
           product: {
@@ -41,11 +48,22 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
           },
           quantity: item.quantity,
         })),
-        total: cartTotal,
+        total: cartTotal - discountAmount,
         address,
       };
 
       await createOrder(orderPayload);
+
+      // Thay đổi trạng thái mã giảm giá nếu có
+      if (appliedDiscount) {
+        try {
+          await toggleDiscountCode(appliedDiscount.code, false);
+          setAppliedDiscount(null);
+        } catch (discountError) {
+          console.error("Failed to toggle discount code:", discountError);
+        }
+      }
+
       clearCart();
       setShowSuccess(true);
     } catch (err) {
@@ -175,6 +193,17 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
                   <span>Tạm tính</span>
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
+                {appliedDiscount && (
+                  <div className="flex justify-between text-red-600 font-medium">
+                    <span>Giảm giá ({appliedDiscount.discount}%)</span>
+                    <span>
+                      -
+                      {formatPrice(
+                        (cartTotal * appliedDiscount.discount) / 100
+                      )}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển</span>
                   <span className="text-green-600 font-medium">Miễn phí</span>
@@ -182,7 +211,12 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
                 <div className="border-t pt-3 flex justify-between text-lg font-bold">
                   <span>Tổng cộng</span>
                   <span className="text-blue-600">
-                    {formatPrice(cartTotal)}
+                    {formatPrice(
+                      cartTotal -
+                        (appliedDiscount
+                          ? (cartTotal * appliedDiscount.discount) / 100
+                          : 0)
+                    )}
                   </span>
                 </div>
               </div>

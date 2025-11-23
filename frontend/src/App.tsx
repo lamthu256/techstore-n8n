@@ -6,6 +6,7 @@ import { ProductProvider } from "./contexts/ProductContext";
 import { ReviewProvider } from "./contexts/ReviewContext";
 import { CustomerProvider } from "./contexts/CustomerContext";
 import { DashboardProvider } from "./contexts/DashboardContext";
+import { DiscountProvider } from "./contexts/DiscountContext";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -242,11 +243,13 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <OrderProvider>
-          <ProductProvider>
-            <AppContent />
-          </ProductProvider>
-        </OrderProvider>
+        <DiscountProvider>
+          <OrderProvider>
+            <ProductProvider>
+              <AppContent />
+            </ProductProvider>
+          </OrderProvider>
+        </DiscountProvider>
       </CartProvider>
     </AuthProvider>
   );

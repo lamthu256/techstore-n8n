@@ -1,6 +1,21 @@
 import { Request, Response } from "express";
 import { pool } from "../db";
 
+// Lấy tất cả danh sách giỏ hàng của từng user (Admin)
+export const getCartItems = async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT u.name, u.email, json_build_object('name', p.name, 'price', p.price, 'image', p.image, 'quantity', c.quantity, 'created_at', c.created_at) as cart_item
+       FROM cart_items c
+       JOIN products p ON c.product_id = p.id
+       JOIN users u ON c.user_id = u.id`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching cart items" });
+  }
+};
+
 // Lấy giỏ hàng
 export const getCart = async (req: Request, res: Response) => {
   const userId = req.query.userId as string;

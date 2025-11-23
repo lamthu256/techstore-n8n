@@ -1,5 +1,8 @@
 import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
+import { useState } from "react";
 import { useCart } from "../contexts/CartContext";
+import { useDiscount } from "../contexts/DiscountContext";
+import { validateDiscountCode } from "../api/discountService";
 
 export default function CartPage({
   onCheckout,
@@ -10,6 +13,37 @@ export default function CartPage({
 }) {
   const { cartItems, cartTotal, updateItemQuantity, removeItem, totalItems } =
     useCart();
+  const { appliedDiscount, setAppliedDiscount } = useDiscount();
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountError, setDiscountError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Vui lòng nhập mã giảm giá");
+      return;
+    }
+
+    setIsValidating(true);
+    setDiscountError("");
+
+    try {
+      const result = await validateDiscountCode(discountCode);
+      setAppliedDiscount({
+        code: result.code,
+        discount: result.discount,
+      });
+    } catch (error: any) {
+      setDiscountError("Mã giảm giá không hợp lệ");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const discountAmount = appliedDiscount
+    ? (cartTotal * appliedDiscount.discount) / 100
+    : 0;
+  const finalTotal = cartTotal - discountAmount;
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("vi-VN", {
@@ -112,11 +146,62 @@ export default function CartPage({
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
               <h2 className="text-xl font-bold mb-6">Tóm tắt đơn hàng</h2>
 
+              {/* Mã giảm giá */}
+              <div className="mb-6 pb-6 border-b">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mã giảm giá
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    placeholder="Nhập mã giảm giá"
+                    disabled={!!appliedDiscount}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    onClick={handleApplyDiscount}
+                    disabled={
+                      !discountCode.trim() || !!appliedDiscount || isValidating
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+                  >
+                    {isValidating
+                      ? "..."
+                      : appliedDiscount
+                      ? "Đã áp dụng"
+                      : "Áp dụng"}
+                  </button>
+                </div>
+                {discountError && (
+                  <p className="mt-2 text-sm text-red-600">{discountError}</p>
+                )}
+                {appliedDiscount && (
+                  <button
+                    onClick={() => {
+                      setAppliedDiscount(null);
+                      setDiscountCode("");
+                      setDiscountError("");
+                    }}
+                    className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Hủy mã giảm giá
+                  </button>
+                )}
+              </div>
+
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Tạm tính</span>
                   <span>{formatPrice(cartTotal)}</span>
                 </div>
+                {appliedDiscount && (
+                  <div className="flex justify-between text-red-600 font-medium">
+                    <span>Giảm giá ({appliedDiscount.discount}%)</span>
+                    <span>-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển</span>
                   <span className="text-green-600 font-medium">Miễn phí</span>
@@ -124,7 +209,7 @@ export default function CartPage({
                 <div className="border-t pt-3 flex justify-between text-lg font-bold">
                   <span>Tổng cộng</span>
                   <span className="text-blue-600">
-                    {formatPrice(cartTotal)}
+                    {formatPrice(finalTotal)}
                   </span>
                 </div>
               </div>
