@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { pool } from "../db";
+import api from "./axios";
 
 // GET USER ORDERS
 export const getOrders = async (req: Request, res: Response) => {
@@ -64,6 +65,16 @@ export const createOrder = async (req: Request, res: Response) => {
     // Xóa giỏ hàng của user
     await client.query("DELETE FROM cart_items WHERE user_id = $1", [userId]);
     await client.query("COMMIT");
+
+    // Gọi n8n webhook
+    api
+      .post("/add-order", {
+        orderId: orderId,
+        total: total,
+        address: address,
+      })
+      .catch((err) => console.error("n8n webhook error:", err));
+
     res.status(201).json({ message: "Order placed successfully", orderId });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -131,6 +142,16 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     if (orderResult.rows.length === 0) {
       return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Gọi n8n webhook
+    if (status !== "pending" && status !== "processing") {
+      api
+        .post("/update-order-status", {
+          orderId: id,
+          status: status,
+        })
+        .catch((err) => console.error("n8n webhook error:", err));
     }
 
     res.json(orderResult.rows[0]);

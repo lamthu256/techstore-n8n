@@ -21,7 +21,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminProductForm from "./pages/admin/AdminProductForm";
-import { Product, CustomerProfile } from "./types";
+import { Product } from "./types";
 
 type Page =
   | "home"
@@ -41,8 +41,6 @@ type Page =
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>("home");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedCustomer, setSelectedCustomer] =
-    useState<CustomerProfile | null>(null);
   const { user } = useAuth();
 
   const isAdmin = user?.role === "admin";
@@ -187,11 +185,7 @@ function AppContent() {
             )}
             {currentPage === "admin-customers" && (
               <CustomerProvider>
-                <AdminCustomers
-                  onViewDetail={(customer) => {
-                    setSelectedCustomer(customer);
-                  }}
-                />
+                <AdminCustomers onViewDetail={() => {}} />
               </CustomerProvider>
             )}
           </div>
