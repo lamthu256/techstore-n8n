@@ -9,6 +9,9 @@ import orderRoutes from "./routes/orders";
 import reviewRoutes from "./routes/reviews";
 import customerRoutes from "./routes/customer";
 import discountRoutes from "./routes/discount";
+import trackRoutes from "./routes/track";
+import analyticsRoutes from "./routes/analytics";
+import reportRoutes from "./routes/report";
 
 dotenv.config();
 const app = express();
@@ -25,6 +28,9 @@ app.use("/orders", orderRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/customers", customerRoutes);
 app.use("/discounts", discountRoutes);
+app.use("/track", trackRoutes);
+app.use("/analytics", analyticsRoutes);
+app.use("/report", reportRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

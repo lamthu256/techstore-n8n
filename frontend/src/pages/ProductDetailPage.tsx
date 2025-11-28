@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ShoppingCart, Minus, Plus, ArrowLeft, Star } from "lucide-react";
 import { Product } from "../types";
 import { useCart } from "../contexts/CartContext";
 import ProductReviews from "./ProductReviews";
-
+import { trackView } from "../api/trackService";
+import { useAuth } from "../contexts/AuthContext";
 interface ProductDetailPageProps {
   product: Product;
   onBack: () => void;
@@ -15,6 +16,17 @@ export default function ProductDetailPage({
 }: ProductDetailPageProps) {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const hasTracked = useRef(false);
+  useEffect(() => {
+    console.log("Tracking triggered!", user, product);
+    if (!user || !product) return;
+
+    if (hasTracked.current) return;
+    hasTracked.current = true;
+
+    trackView(user.id, product.id);
+  }, [user?.id, product.id]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
