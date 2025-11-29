@@ -19,6 +19,14 @@ export default function ProductCard({
     }).format(price);
   };
 
+  const finalPrice =
+    product.final_price !== undefined ? product.final_price : product.price;
+
+  const hasFlashSale =
+    product.final_price !== undefined && product.final_price < product.price;
+
+  const flashPercent = product.flash_discount_percent ?? 0;
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
       <div
@@ -38,6 +46,12 @@ export default function ProductCard({
         {product.stock === 0 && (
           <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
             Hết hàng
+          </span>
+        )}
+
+        {hasFlashSale && (
+          <span className="absolute bottom-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+            Flash Sale {flashPercent > 0 ? `-${flashPercent}%` : ""}
           </span>
         )}
       </div>
@@ -63,9 +77,17 @@ export default function ProductCard({
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-blue-600">
-            {formatPrice(product.price)}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-blue-600">
+              {formatPrice(finalPrice)}
+            </span>
+
+            {hasFlashSale && (
+              <span className="text-xs text-gray-500 line-through">
+                {formatPrice(product.price)}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => onAddToCart(product)}

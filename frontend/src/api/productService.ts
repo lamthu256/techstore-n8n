@@ -28,7 +28,23 @@ const mapProduct = (p: any): Product => ({
 // Products (Public)
 export const getProducts = async (): Promise<Product[]> => {
   const res = await api.get("/products");
-  return res.data.map((item: any) => mapProduct(item));
+
+  return res.data.map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    price: item.price,
+    image: item.image,
+    category: item.category,
+    stock: item.stock,
+    rating: item.rating,
+    reviewsCount: item.reviews_count ?? 0,
+    createdAt: item.created_at,
+
+    // 🔥 2 trường flash sale
+    final_price: item.final_price,
+    flash_discount_percent: item.flash_discount_percent,
+  }));
 };
 
 // Product Details

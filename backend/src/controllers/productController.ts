@@ -4,13 +4,34 @@ import api from "./axios";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    // Có thể thêm logic filter/sort tại đây
-    const result = await pool.query(
-      "SELECT * FROM products ORDER BY created_at DESC"
-    );
-    res.json(result.rows);
+    const { rows } = await pool.query(`
+      WITH active_flash AS (
+        SELECT discount_percent
+        FROM flash_sales
+        WHERE start_at <= NOW()
+          AND end_at   >= NOW()
+        ORDER BY start_at DESC
+        LIMIT 1
+      )
+      SELECT
+        p.*,
+        COALESCE(
+          (SELECT discount_percent FROM active_flash),
+          0
+        ) AS flash_discount_percent,
+        CASE
+          WHEN (SELECT discount_percent FROM active_flash) IS NOT NULL
+          THEN ROUND(p.price * (1 - (SELECT discount_percent FROM active_flash) / 100.0))::int
+          ELSE p.price
+        END AS final_price
+      FROM products p
+      ORDER BY p.created_at DESC;
+    `);
+
+    return res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching products" });
+    console.error("getProducts error:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

@@ -1,4 +1,3 @@
-// backend/src/routes/analytics.ts
 import { Router } from "express";
 import { getViewReminderCandidates } from "../controllers/analyticsController";
 

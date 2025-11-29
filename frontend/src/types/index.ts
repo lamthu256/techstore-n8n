@@ -17,6 +17,9 @@ export interface Product {
   rating: number;
   reviewsCount: number;
   createdAt?: string;
+
+  final_price?: number; // giá sau flash sale
+  flash_discount_percent?: number;
 }
 
 export interface ProductReview {

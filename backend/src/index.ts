@@ -12,6 +12,8 @@ import discountRoutes from "./routes/discount";
 import trackRoutes from "./routes/track";
 import analyticsRoutes from "./routes/analytics";
 import reportRoutes from "./routes/report";
+import refShareRoutes from "./routes/refShareRoutes";
+import flashSaleRoutes from "./routes/flashSaleRoutes";
 
 dotenv.config();
 const app = express();
@@ -31,6 +33,8 @@ app.use("/discounts", discountRoutes);
 app.use("/track", trackRoutes);
 app.use("/analytics", analyticsRoutes);
 app.use("/report", reportRoutes);
+app.use("/ref-share", refShareRoutes);
+app.use("/flash-sales", flashSaleRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

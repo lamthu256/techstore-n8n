@@ -6,6 +6,7 @@ import { useDiscount } from "../contexts/DiscountContext";
 import { Address } from "../types";
 import { CheckCircle } from "lucide-react";
 import { toggleDiscountCode } from "../api/discountService";
+import { notifyInviteUsed } from "../api/refShareService";
 
 type CheckoutPageProps = {
   onComplete: () => void;
@@ -52,7 +53,20 @@ export default function CheckoutPage({ onComplete }: CheckoutPageProps) {
         address,
       };
 
-      await createOrder(orderPayload);
+      const createdOrderId = await createOrder(orderPayload);
+
+      if (appliedDiscount && user?.email) {
+        try {
+          await notifyInviteUsed({
+            customerEmail: user.email,
+            discountCode: appliedDiscount.code,
+            orderId: createdOrderId ?? undefined,
+            total: cartTotal - discountAmount,
+          });
+        } catch (refErr) {
+          console.error("Notify referral failed:", refErr);
+        }
+      }
 
       // Thay đổi trạng thái mã giảm giá nếu có
       if (appliedDiscount) {
